@@ -1,65 +1,49 @@
 @extends('layouts.app')
 
-@section('styles')
-    <style>
-        .popover {
-            max-width: none !important;
-        }
-    </style>
-    <meta name="base-url" content="{{ url('') }}">
-    <meta name="base-url" content="http://localhost/proyectoalan">
-    <link href="{{ asset('assets/plugins/custom/prismjs/prismjs.bundle.css') }}" rel="stylesheet" type="text/css" />
-    <link href="{{ asset('assets/plugins/custom/datatables/datatables.bundle.css') }}" rel="stylesheet" type="text/css" />
-    <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
-    <script src="{{ asset('assets/js/scripts.bundle.js') }}"></script>
-@endsection
-
 @section('content')
     <div class="d-flex flex-column flex-column-fluid">
-        <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
-            <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
-                <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
-                    <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
-                        Cursos</h1>
-                    <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
-                        <li class="breadcrumb-item text-muted">
-                            <a href="#" class="text-muted text-hover-primary">Cursos</a>
-                        </li>
-                        <li class="breadcrumb-item">
-                            <span class="bullet bg-gray-500 w-5px h-2px"></span>
-                        </li>
-                    </ul>
+        <!-- Page Hero Banner -->
+        <div class="page-hero-banner">
+            <div>
+                <h1 class="page-hero-title">Explorar Cursos 🎓</h1>
+                <p class="page-hero-subtitle">Descubre y matricúlate en los cursos diseñados para tu desarrollo profesional.</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge-modern-primary">
+                    <i class="bi bi-mortarboard-fill me-1"></i> <span id="totalCursosCount">...</span> Cursos en catálogo
+                </span>
+                <a href="{{ route('crearcurso') }}" class="btn-modern-primary">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Crear Curso</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="modern-card mb-6">
+            <div class="p-4 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                <div class="input-group" style="max-width: 480px;">
+                    <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" id="searchCursosInput" class="form-control form-control-modern border-start-0" 
+                           placeholder="Buscar por nombre, docente o materia...">
+                </div>
+
+                <div class="d-flex align-items-center gap-2 text-muted fs-7">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Selecciona cualquier curso para consultar su temario e inscribirte.</span>
                 </div>
             </div>
         </div>
-        <div id="kt_app_content" class="app-content flex-column-fluid">
-            <div id="kt_app_content_container" class="app-container container-xxl">
-                <form name="" id="" class="form" method="POST" enctype="multipart/form-data"
-                    autocomplete="off">
-                     @csrf
-                     
-                    <div class="d-flex flex-column flex-column-fluid">
 
-                        @include('cursos.cursodis')
-
-         
-                    </div>
-                    <br>
-                </form>
-            </div>
+        <!-- Courses Cards Grid -->
+        <div class="courses-modern-grid" id="contenedor-cursos">
+            @include('cursos.cursodis')
         </div>
     </div>
 @endsection
 
-
-
-
-
-
 @section('javascript')
-    <script src="{{ asset('assets/plugins/custom/datatables/datatables.bundle.js') }}"></script>
-    <script src="{{ asset('assets/js/scripts.bundle.js') }}"></script>
-
-    <script src="{{ asset('assets/plugins/custom/prismjs/prismjs.bundle.js') }}"></script>
-    <script src="{{ asset('assets/js/cursoss/cursos.js?v=1.0.2') }}"></script>
+    <script src="{{ asset('assets/js/cursoss/cursos.js?v=2.0.0') }}"></script>
 @endsection

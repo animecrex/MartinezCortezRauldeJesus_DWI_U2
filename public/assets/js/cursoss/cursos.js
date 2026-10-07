@@ -1,73 +1,145 @@
-const BASE_URL = $('meta[name="base-url"]').attr("content");
+const BASE_URL = ($('meta[name="base-url"]').attr("content") || "").replace(/\/$/, "");
 const csrfToken = $('meta[name="csrf-token"]').attr("content");
+
+let cursosCache = [];
 
 $(document).ready(function () {
     cargarTodos();
     verificarEstadoSuscripcion();
+
+    // Live search listener
+    $(document).on("input", "#searchCursosInput", function () {
+        const query = $(this).val().toLowerCase().trim();
+        renderCursos(query);
+    });
 });
 
+function renderCursos(filter = "") {
+    let filtrados = cursosCache;
+    if (filter) {
+        filtrados = cursosCache.filter((c) => {
+            const nombre = (c.nombre || "").toLowerCase();
+            const desc = (c.descripcion || "").toLowerCase();
+            const maestro = (c.maestro || "").toLowerCase();
+            return nombre.includes(filter) || desc.includes(filter) || maestro.includes(filter);
+        });
+    }
+
+    if (!filtrados.length) {
+        $("#contenedor-cursos").html(`
+            <div class="col-12 text-center py-12">
+                <div class="d-inline-flex align-items-center justify-content-center p-4 bg-light rounded-circle mb-3">
+                    <i class="bi bi-search fs-2x text-muted"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">No se encontraron cursos</h4>
+                <p class="text-muted fs-6">Intenta con otros términos o registra un nuevo curso.</p>
+            </div>
+        `);
+        return;
+    }
+
+    let html = "";
+    filtrados.forEach((r) => {
+        const imgSrc = r.imagen 
+            ? `${BASE_URL}/storage/${r.imagen}` 
+            : `${BASE_URL}/assets/media/misc/curso.jpg`;
+
+        const costoFormat = parseFloat(r.costo || 0).toLocaleString('es-MX', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        html += `
+            <div class="course-card">
+                <div class="course-card-img-wrapper">
+                    <img src="${imgSrc}" class="course-card-img" alt="${r.nombre}" onerror="this.src='${BASE_URL}/assets/media/misc/curso.jpg'">
+                    <span class="course-card-badge-cost">
+                        $${costoFormat} MXN
+                    </span>
+                </div>
+
+                <div class="course-card-body">
+                    <h3 class="course-card-title">${r.nombre}</h3>
+                    <p class="course-card-desc">${r.descripcion || 'Sin descripción disponible.'}</p>
+
+                    <div class="mb-3">
+                        <div class="course-meta-item">
+                            <i class="bi bi-person-workspace"></i>
+                            <span>${r.maestro ? r.maestro : 'Instructor asignado'}</span>
+                        </div>
+                        <div class="course-meta-item">
+                            <i class="bi bi-clock-history text-warning"></i>
+                            <span>${r.horas || 1} horas lectivas</span>
+                        </div>
+                        <div class="course-meta-item">
+                            <i class="bi bi-people text-info"></i>
+                            <span>Cupo: ${r.cant_alumnos || 'Limitado'} alumnos</span>
+                        </div>
+                    </div>
+
+                    <div class="course-card-footer">
+                        <a class="btn-modern-primary w-100 text-center text-decoration-none" 
+                           href="${BASE_URL}/detallescurso/${r.hash}">
+                            <span>Ver Curso & Inscribirse</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    $("#contenedor-cursos").html(html);
+}
+
 function cargarTodos() {
+    $("#contenedor-cursos").html(`
+        <div class="col-12 text-center py-10">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="text-muted mt-2 fs-7">Cargando cursos disponibles...</p>
+        </div>
+    `);
+
     $.ajax({
         url: `${BASE_URL}/curso/traercursos`,
         type: "GET",
         dataType: "json",
         success: function (res) {
-            let html = "";
-
-            res.forEach((r) => {
-                html += `
-                    <div class="card">
-                        <div class="img">
-                            <img src="${BASE_URL}/storage/${r.imagen}">
-                        </div>
-
-                        <div class="text">
-                            <p class="h3">${r.nombre}</p>
-                            <p class="p">${r.descripcion}</p>
-
-                            <div class="icon-box">
-                                <p class="span">Maestro: ${r.maestro}</p>
-                            </div>
-
-                            <div class="icon-box">
-                                <p class="span">Costo: $${r.costo}</p>
-                            </div>
-
-                          
-                                <a class="btn btn-success btn-seleccionar" 
-                                    href="${BASE_URL}/detallescurso/${r.hash}">
-                                    Seleccionar 
-                                </a>
-                        </div>
-                    </div>
-`;
-            });
-
-            $("#contenedor-cursos").html(html);
+            cursosCache = res || [];
+            $("#totalCursosCount").text(cursosCache.length);
+            renderCursos();
         },
         error: function (xhr) {
             console.error("ERROR:", xhr.responseText);
+            $("#contenedor-cursos").html(`
+                <div class="col-12 alert alert-danger text-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    No se pudieron cargar los cursos. Verifica la conexión a la base de datos.
+                </div>
+            `);
         },
     });
 }
 
 $(document).on("click", ".pagarBtn", function () {
     let cursoId = $(this).data("curso-id");
-    let $btn = $("#modalPago").data("btn-target");
+    let $btn = $("#modalPago").data("btn-target") || $("#btn-inscripcion");
     const tarjetaId = $("#tarjetaSelect").val();
 
     if (!tarjetaId) {
         Swal.fire({
-            title: "Sin tarjeta",
-            text: "Debes seleccionar una tarjeta registrada para suscribirte.",
+            title: "Selecciona una tarjeta",
+            text: "Debes elegir una tarjeta bancaria para autorizar la inscripción.",
             icon: "warning",
-            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#2563eb",
+            confirmButtonText: "Entendido",
         });
         return;
     }
 
     registrarCurso(cursoId, $btn, tarjetaId);
-    verificarEstadoSuscripcion();
     cerrarModalPago();
 });
 
@@ -77,10 +149,12 @@ $(document).on("click", "#btn-inscripcion", function () {
 
     if (suscrito) {
         Swal.fire({
-            title: "¿Deseas desinscribirte?",
-            text: "No se devolverá el dinero.",
+            title: "¿Deseas darte de baja?",
+            text: "Se cancelará tu inscripción a este curso.",
             icon: "warning",
             showCancelButton: true,
+            confirmButtonColor: "#ef4444",
+            cancelButtonColor: "#64748b",
             confirmButtonText: "Sí, desinscribirme",
             cancelButtonText: "Cancelar",
         }).then((result) => {
@@ -89,7 +163,7 @@ $(document).on("click", "#btn-inscripcion", function () {
             }
         });
     } else {
-        abrirModalPago(cursoId);
+        abrirModalPago(cursoId, $(this));
     }
 });
 
@@ -120,16 +194,24 @@ function actualizarBotonInscripcion(suscrito, $btn) {
     }
 
     $btn.data("suscrito", suscrito);
-    $btn.text(suscrito ? "Desuscribirse" : "Suscribirse");
-    $btn.removeClass("btn-primary btn-danger").addClass(suscrito ? "btn-danger" : "btn-primary");
+    if (suscrito) {
+        $btn.html('<i class="bi bi-x-circle me-1"></i> Desuscribirme');
+        $btn.removeClass("btn-modern-primary btn-primary").addClass("btn-danger");
+    } else {
+        $btn.html('<i class="bi bi-check2-circle me-1"></i> Inscribirme al Curso');
+        $btn.removeClass("btn-danger").addClass("btn-modern-primary");
+    }
 }
 
 function abrirModalPago(cursoId, $btn) {
     $("#modalPago").data("curso-id", cursoId);
     $("#modalPago").data("btn-target", $btn || null);
     $(".pagarBtn").data("curso-id", cursoId);
-    $("#modalPago").css("display", "block");
-    $("body").addClass("modal-open");
+    $("#modalPagoBackdrop").fadeIn(200);
+}
+
+function cerrarModalPago() {
+    $("#modalPagoBackdrop").fadeOut(200);
 }
 
 function registrarCurso(cursoId, $btn, tarjetaId) {
@@ -148,14 +230,23 @@ function registrarCurso(cursoId, $btn, tarjetaId) {
         success: function (res) {
             actualizarBotonInscripcion(true, $btn);
             Swal.fire({
-                title: "¡Éxito!",
-                text: res.message,
+                title: "¡Inscripción Exitosa!",
+                text: res.message || "Tu curso ha sido registrado exitosamente.",
                 icon: "success",
-                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#2563eb",
+                confirmButtonText: "Ir a Mis Suscripciones",
+            }).then(() => {
+                window.location.href = `${BASE_URL}/mis-suscripciones`;
             });
         },
         error: function (xhr) {
             console.error("ERROR:", xhr.responseText);
+            Swal.fire({
+                title: "Error al inscribir",
+                text: (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "No se pudo procesar la inscripción.",
+                icon: "error",
+                confirmButtonColor: "#2563eb"
+            });
         },
     });
 }
@@ -175,10 +266,10 @@ function desregistrarCurso(cursoId, $btn) {
         success: function (res) {
             actualizarBotonInscripcion(false, $btn);
             Swal.fire({
-                title: "Desinscripción",
-                text: res.message,
-                icon: "warning",
-                confirmButtonText: "Aceptar",
+                title: "Desinscripción completada",
+                text: res.message || "Has sido dado de baja de este curso.",
+                icon: "info",
+                confirmButtonColor: "#2563eb",
             });
         },
         error: function (xhr) {
@@ -187,27 +278,13 @@ function desregistrarCurso(cursoId, $btn) {
     });
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const abrirBtn = document.getElementById("abrirModalBtn");
-    const cerrarBtn = document.getElementById("cerrarModalBtn");
-    const modal = document.getElementById("modalPago");
-
-    abrirBtn?.addEventListener("click", () => {
-        abrirModalPago($(modal).data("curso-id") || null, null);
-    });
-
-    cerrarBtn?.addEventListener("click", () => {
-        cerrarModalPago();
-    });
-
-    window.addEventListener("click", (e) => {
-        if (e.target === modal) {
-            cerrarModalPago();
-        }
-    });
+// Modal closing handlers
+$(document).on("click", "#cerrarModalBtn, .btn-close-modal", function () {
+    cerrarModalPago();
 });
 
-function cerrarModalPago() {
-    $("#modalPago").hide();
-    $("body").removeClass("modal-open");
-}
+$(document).on("click", "#modalPagoBackdrop", function (e) {
+    if ($(e.target).is("#modalPagoBackdrop")) {
+        cerrarModalPago();
+    }
+});

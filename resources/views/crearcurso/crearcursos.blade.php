@@ -1,65 +1,48 @@
 @extends('layouts.app')
 
-@section('styles')
-    <style>
-        .popover {
-            max-width: none !important;
-        }
-    </style>
-
-    <meta name="base-url" content="{{ url('') }}">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <link href="{{ asset('assets/plugins/custom/prismjs/prismjs.bundle.css') }}" rel="stylesheet" />
-
-    <link href="{{ asset('assets/plugins/custom/datatables/datatables.bundle.css') }}" rel="stylesheet" />
-@endsection
-
 @section('content')
-    <div class="app-main flex-column flex-row-fluid">
-
-        <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
-            <div class="app-container container-fluid d-flex flex-stack"></div>
-        </div>
-
-        <!-- CONTENT -->
-        <div id="kt_app_content" class="app-content flex-column-fluid">
-            <div class="app-container container-xxl">
-
-                <form id="registrarcurso" method="POST" enctype="multipart/form-data" autocomplete="off">
-                     @csrf
-                     
-                    @include('crearcurso.crearcurs')
-
-                    <div class="text-center mt-5">
-                        <button type="submit" id="guardar_curso" class="btn btn-primary btn-lg w-100 w-md-auto form-control">
-                            💾 Guardar
-                        </button>
-                    </div>
-
-                    @include('crearcurso.listadecurso')
-
-                </form>
-
+    <div class="d-flex flex-column flex-column-fluid">
+        <!-- Page Hero Header -->
+        <div class="page-hero-banner">
+            <div>
+                <h1 class="page-hero-title">Gestión y Creación de Cursos 📚</h1>
+                <p class="page-hero-subtitle">Diseña nuevos programas educativos y gestiona el contenido de tus materias.</p>
+            </div>
+            <div>
+                <a href="{{ route('curso') }}" class="btn-modern-outline">
+                    <i class="bi bi-grid-fill"></i>
+                    <span>Ver Catálogo Público</span>
+                </a>
             </div>
         </div>
 
+        <!-- Form & List Container -->
+        <form id="registrarcurso" method="POST" enctype="multipart/form-data" autocomplete="off">
+            @csrf
+
+            <!-- Form Card Component -->
+            <div class="modern-card mb-6">
+                @include('crearcurso.crearcurs')
+
+                <div class="p-4 p-md-6 bg-light-subtle border-top d-flex justify-content-end gap-3">
+                    <button type="reset" class="btn-modern-outline">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Limpiar Campos</span>
+                    </button>
+                    <button type="submit" id="guardar_curso" class="btn-modern-primary">
+                        <i class="bi bi-cloud-arrow-up-fill"></i>
+                        <span>Publicar Curso</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Existing Courses Table Card Component -->
+            @include('crearcurso.listadecurso')
+        </form>
     </div>
 @endsection
 
 @section('javascript')
-
-    <!-- CORE (OBLIGATORIO) -->
-    <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
-    <script src="{{ asset('assets/js/scripts.bundle.js') }}"></script>
-
-    <!-- LIBRERÍAS -->
     <script src="{{ asset('assets/plugins/custom/datatables/datatables.bundle.js') }}"></script>
-
-    <!-- OPCIONAL -->
-    <script src="{{ asset('assets/plugins/custom/prismjs/prismjs.bundle.js') }}"></script>
-
-    <!-- TU JS -->
-    <script src="{{ asset('assets/js/cursos/curso.js?v=1.0.2') }}"></script>
-
+    <script src="{{ asset('assets/js/cursos/curso.js?v=2.0.0') }}"></script>
 @endsection

@@ -1,47 +1,33 @@
 @extends('layouts.app')
 
-@section('styles')
-    <style>
-        .popover {
-            max-width: none !important;
-        }
-    </style>
-    <meta name="base-url" content="{{ url('') }}">
-    <link href="{{ asset('assets/plugins/custom/prismjs/prismjs.bundle.css') }}" rel="stylesheet" type="text/css" />
-    <link href="{{ asset('assets/plugins/custom/datatables/datatables.bundle.css') }}" rel="stylesheet" type="text/css" />
-@endsection
-
 @section('content')
     <div class="d-flex flex-column flex-column-fluid">
-        <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
-            <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
-
+        <!-- Page Hero Banner -->
+        <div class="page-hero-banner">
+            <div>
+                <h1 class="page-hero-title">Gestión de Maestros 👨‍🏫</h1>
+                <p class="page-hero-subtitle">Registra nuevos docentes y consulta el claustro de profesores activos.</p>
+            </div>
+            <div>
+                <span class="badge-modern-primary">
+                    <i class="bi bi-people-fill me-1"></i> {{ count($maestros) }} Maestros registrados
+                </span>
             </div>
         </div>
 
-        <div id="kt_app_content" class="app-content flex-column-fluid">
-            <div id="kt_app_content_container" class="app-container container-xxl">
-
-                <form action="{{ route('maestros.guardar') }}" method="POST" class="form" autocomplete="off">
-                    @csrf
-
-                    <div class="d-flex flex-column flex-column-fluid">
-
-                        @include('maestros.index')
-
-                    </div>
-
-                    <br>
-                </form>
-
+        @if(session('success'))
+            <div class="alert alert-success d-flex align-items-center gap-3 p-4 rounded-4 shadow-sm mb-6 border-0 bg-light-success">
+                <i class="bi bi-check-circle-fill text-success fs-3"></i>
+                <div>
+                    <h5 class="fw-bold text-success mb-0">¡Registro Exitoso!</h5>
+                    <span class="text-success fs-7">{{ session('success') }}</span>
+                </div>
             </div>
-        </div>
+        @endif
+
+        <form action="{{ route('maestros.guardar') }}" method="POST" autocomplete="off">
+            @csrf
+            @include('maestros.index')
+        </form>
     </div>
-@endsection
-
-@section('javascript')
-    <script src="{{ asset('assets/plugins/custom/datatables/datatables.bundle.js') }}"></script>
-    <script src="{{ asset('assets/js/scripts.bundle.js') }}"></script>
-
-    <script src="{{ asset('assets/plugins/custom/prismjs/prismjs.bundle.js') }}"></script>
 @endsection
